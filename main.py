@@ -181,7 +181,7 @@ class PSOAlgorithm:
         self.type = type
         self.iterations = iterations
         self.epsilon = epsilon
-        self.EPSILON_MAX_ITERATIONS = 10000
+        self.EPSILON_MAX_ITERATIONS = 100000
 
     def iteration_run(self):
         best_score = None
@@ -219,12 +219,12 @@ if __name__ == '__main__':
     excel_saver = ExcelSaver(workbook=wb)
 
     functions = [
-        {
-            'function': sphere_func,
-            'low_range': -100,
-            'high_range': 100,
-            'epsilon': 0.001,
-        },
+        # {
+        #     'function': sphere_func,
+        #     'low_range': -100,
+        #     'high_range': 100,
+        #     'epsilon': 0.001,
+        # },
         {
             'function': leeyao_func,
             'low_range': -10,
@@ -269,7 +269,7 @@ if __name__ == '__main__':
                         for i in range(15):
 
                             swarm = Swarm(population_size, dimension, low_range, high_range, function, ac_func)
-                            pso_algorithm = PSOAlgorithm(swarm, variant, epsilon=epsilon, iterations=1000)
+                            pso_algorithm = PSOAlgorithm(swarm, variant, epsilon=epsilon, iterations=10000)
 
                             print(f'Fitness: {function.__name__}, dimensions: {dimension}, population: {population_size}, variant: {variant}, acc func: {ac_func.__name__}')
                             result = pso_algorithm.run()
