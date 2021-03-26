@@ -1,8 +1,7 @@
-import numpy as np
-import openpyxl as xl
 import math
 import random
 
+import numpy as np
 from openpyxl import Workbook
 
 ACCELERATION_MIN = 0.4
@@ -111,7 +110,6 @@ class ExcelSaver:
             counter = self.f2_counter_column
             self.f2_counter_column += 2
         else:
-            print(function)
             counter = self.Griewank_counter_column
             self.Griewank_counter_column += 2
         row_plus_1 = counter + 1
@@ -123,10 +121,12 @@ class ExcelSaver:
         worksheet.cell(3, row_plus_1, "acc_coe")  # coefficient acceleration
         worksheet.cell(4, counter, algorithm)
         worksheet.cell(4, row_plus_1, coefficent)
-        worksheet.cell(5, counter,"value" "i")  # i
+        worksheet.cell(5, counter, "value" "i")  # i
         worksheet.cell(5, row_plus_1,  "i")  # value
-        worksheet.cell( 5 + result[1], counter, result[0])
-        worksheet.cell( 5 + result[1], row_plus_1, result[1])
+        worksheet.cell(5 + result[1], counter, result[0])
+        worksheet.cell(5 + result[1], row_plus_1, result[1])
+
+
 class Particle:
     def __init__(self, dimensions: int, x_from: float, x_to: float, func, ac_func):
         self.ac_func = ac_func
@@ -138,8 +138,8 @@ class Particle:
         self.interia_weight = 0.7
 
     def step(self, g, iteration_ratio):
-        acc1 = ac_func(ACCELERATION_MAX, ACCELERATION_MIN, 1 - iteration_ratio)
-        acc2 = ac_func(ACCELERATION_MAX, ACCELERATION_MIN, iteration_ratio)
+        acc1 = self.ac_func(ACCELERATION_MAX, ACCELERATION_MIN, iteration_ratio)
+        acc2 = self.ac_func(ACCELERATION_MAX, ACCELERATION_MIN, 1 - iteration_ratio)
         self.velocity = self.velocity * self.interia_weight + acc1 * random.uniform(0, 1) * (
                 self.best_position - self.position) \
                         + acc2 * random.uniform(0, 1) * (g - self.position)
@@ -181,26 +181,23 @@ class PSOAlgorithm:
         self.type = type
         self.iterations = iterations
         self.epsilon = epsilon
+        self.EPSILON_MAX_ITERATIONS = 300000
 
     def iteration_run(self):
         best_score = None
 
         for i in range(self.iterations):
             best_score, _ = self.swarm.step(i / self.iterations)
-            print(f'{i}: {best_score}')
+            # print(f'{i}: {best_score}')
         return best_score, self.iterations
 
     def epsilon_run(self):
-
-        difference = math.inf
-        best_score = None
+        best_score = math.inf
         i = 0
-        for i in range(self.iterations):
+        while best_score > self.epsilon and i < self.EPSILON_MAX_ITERATIONS:
             best_score, _ = self.swarm.step(i / self.iterations)
-            difference = best_score
-            if difference <= self.epsilon:
-                break
-        return best_score, self.iterations
+            i += 1
+        return best_score, i
 
     def run(self):
         if self.type == 'iterations':
@@ -220,75 +217,65 @@ if __name__ == '__main__':
     wb = Workbook()
     ws = wb.active
     excel_saver = ExcelSaver(workbook=wb)
-    for i in range(5):  # funkcje celu
-        if i == 0:
-            epsilon = 0.0001
-            low_range = -100
-            high_range = 100
-            function = sphere_func
-            ws = wb.create_sheet("sphere_func")
-        elif i == 1:
-            epsilon = 0.01
-            low_range = -10
-            high_range = 10
-            function = leeyao_func
-            ws = wb.create_sheet("leeyao_func")
-        elif i == 2:
-            epsilon = 0.000001
-            low_range = -10
-            high_range = 10
-            function = schwefel_func
-            ws = wb.create_sheet("schwefel_func")
-        elif i == 3:
-            epsilon = 0.0001
-            low_range = -100
-            high_range = 100
-            function = f2_func
-            ws = wb.create_sheet("f2_func")
-        else:
-            epsilon = 0.1
-            low_range = -600
-            high_range = 600
-            function = griewank_func
-            ws = wb.create_sheet("griewank_func")
-        for j in range(5):  # wymiar j+1 *20
-            for k in range(5):  # rozmiar populacji k+1 *20
-                for l in range(3):  # współczynniki przyśpieszenie
-                    if l == 0:
-                        ac_func = linear_interpolation
-                    elif l == 1:
-                        ac_func = square_interpolation
-                    else:
-                        ac_func = const_function
-                    for m in range(2):  # dwa warianty zatrzymania algorytmu
-                        for x in range(15):
 
-                            swarm = Swarm((k + 1) * 20, (j + 1) * 20, low_range, high_range, function, ac_func)
-                            if m == 0:
-                                algorithm = 'iterations'
-                                pso_algorithm = PSOAlgorithm(swarm, 'iterations', epsilon=epsilon, iterations=1)
+    functions = [
+        {
+            'function': sphere_func,
+            'low_range': -100,
+            'high_range': 100,
+            'epsilon': 0.001,
+        },
+        {
+            'function': leeyao_func,
+            'low_range': -10,
+            'high_range': 10,
+            'epsilon': 0.01,
+        },
+        {
+            'function': schwefel_func,
+            'low_range': -10,
+            'high_range': 10,
+            'epsilon': 0.000001,
+        },
+        {
+            'function': f2_func,
+            'low_range': -100,
+            'high_range': 100,
+            'epsilon': 0.0001,
+        },
+        {
+            'function': griewank_func,
+            'low_range': -600,
+            'high_range': 600,
+            'epsilon': 0.1,
+        },
+    ]
 
-                            else:
-                                algorithm = 'epsilon'
-                                pso_algorithm = PSOAlgorithm(swarm, 'epsilon', epsilon=epsilon, iterations=1)
+    dimensions = [5, 10, 20, 50]
+    population_sizes = [20, 50, 100, 200, 300]
+    acc_funcs = [linear_interpolation, square_interpolation, const_function]
+    variants = ['iterations', 'epsilon']
+
+    for _fun in functions:  # funkcje celu
+        epsilon = _fun['epsilon']
+        low_range = _fun['low_range']
+        high_range = _fun['high_range']
+        function = _fun['function']
+        ws = wb.create_sheet(_fun['function'].__name__)
+        for dimension in dimensions:  # wymiar j+1 *20
+            for population_size in population_sizes:  # rozmiar populacji k+1 *20
+                for ac_indx, ac_func in enumerate(acc_funcs):  # współczynniki przyśpieszenien
+                    for variant_indx, variant in enumerate(variants):  # dwa warianty zatrzymania algorytmu
+                        for i in range(15):
+
+                            swarm = Swarm(population_size, dimension, low_range, high_range, function, ac_func)
+                            pso_algorithm = PSOAlgorithm(swarm, variant, epsilon=epsilon, iterations=1000)
+
+                            print(f'Fitness: {function}, dimensions: {dimension}, population: {population_size}, variant: {variant}, acc func: {ac_func}')
                             result = pso_algorithm.run()
-                            excel_saver.save_result(worksheet=ws, dimension=(j + 1) * 20, population=(k + 1) * 20,
-                                                    coefficent=l,
-                                                    algorithm=algorithm,
-                                                    result=result, function= function)
+                            print(result)
+                            excel_saver.save_result(worksheet=ws, dimension=dimension, population=population_size,
+                                                    coefficent=ac_indx,
+                                                    algorithm=variant_indx,
+                                                    result=result, function=function)
         wb.save(filename='Test.xlsx')
-# swarm = Swarm(100, 10, -10, 10, sphere_func)
-# pso_algorithm = PSOAlgorithm(swarm, 'iterations', epsilon=0.01, iterations=100000)
-# pso_algorithm.run()
-# wb = Workbook()
-#  ws = wb.active
-# ws1 = wb.create_sheet("Mysheet")  # insert at the end (default)
-# or
-#  ws2 = wb.create_sheet("Mysheet", 0)  # insert at first position
-# or
-#  ws3 = wb.create_sheet("Mysheet", -1)  # insert at the penultimate position
-#  ws.title = "New Title"
-#  ws.sheet_properties.tabColor = "1072BA"
-#  ws3 = wb["New Title"]
-#  wb.save(filename='Test.xlsx')
-# wcell1=ws.cell(6,1)
