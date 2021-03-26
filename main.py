@@ -195,7 +195,7 @@ class PSOAlgorithm:
         best_score = math.inf
         i = 0
         while best_score > self.epsilon and i < self.EPSILON_MAX_ITERATIONS:
-            best_score, _ = self.swarm.step(i / self.iterations)
+            best_score, _ = self.swarm.step(i / self.EPSILON_MAX_ITERATIONS)
             i += 1
         return best_score, i
 
