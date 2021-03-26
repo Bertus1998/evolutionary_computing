@@ -219,12 +219,12 @@ if __name__ == '__main__':
     excel_saver = ExcelSaver(workbook=wb)
 
     functions = [
-        # {
-        #     'function': sphere_func,
-        #     'low_range': -100,
-        #     'high_range': 100,
-        #     'epsilon': 0.001,
-        # },
+        {
+            'function': sphere_func,
+            'low_range': -100,
+            'high_range': 100,
+            'epsilon': 0.001,
+        },
         {
             'function': leeyao_func,
             'low_range': -10,
