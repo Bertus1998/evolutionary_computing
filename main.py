@@ -181,7 +181,7 @@ class PSOAlgorithm:
         self.type = type
         self.iterations = iterations
         self.epsilon = epsilon
-        self.EPSILON_MAX_ITERATIONS = 100000
+        self.EPSILON_MAX_ITERATIONS = 50000
 
     def iteration_run(self):
         best_score = None
@@ -251,8 +251,8 @@ if __name__ == '__main__':
         },
     ]
 
-    dimensions = [5, 10, 20, 50]
-    population_sizes = [20, 50, 100, 200, 300]
+    dimensions = [5, 10, 20, 30]
+    population_sizes = [20, 30, 50, 80, 100]
     acc_funcs = [linear_interpolation, square_interpolation, const_function]
     variants = ['iterations', 'epsilon']
 
@@ -271,7 +271,7 @@ if __name__ == '__main__':
                             swarm = Swarm(population_size, dimension, low_range, high_range, function, ac_func)
                             pso_algorithm = PSOAlgorithm(swarm, variant, epsilon=epsilon, iterations=10000)
 
-                            print(f'Fitness: {function.__name__}, dimensions: {dimension}, population: {population_size}, variant: {variant}, acc func: {ac_func.__name__}')
+                            print(f'[{i + 1}] Fitness: {function.__name__}, dimensions: {dimension}, population: {population_size}, variant: {variant}, acc func: {ac_func.__name__}')
                             result = pso_algorithm.run()
                             print(result)
                             excel_saver.save_result(worksheet=ws, dimension=dimension, population=population_size,
