@@ -87,11 +87,11 @@ class ExcelSaver:
         # 3 - Griewank  Dimension : 20, 30  Range of x: (-600,600) Epsilon: 0.1
         # 4 - Shwefel Dimension:20, 30  Range of x: ( -10, 10) Epsilon: 0.000001
         # 5 - LeeYao(2004) Dimension:20, 30  Range of x: ( -10, 10) Epsilon: 0.01
-        self.sphere_counter_column = 1
-        self.f2_counter_column = 1
-        self.Griewank_counter_column = 1
-        self.Shwefel_counter_column = 1
-        self.LeeYao_counter_column = 1
+        self.sphere_counter_column = 3
+        self.f2_counter_column = 3
+        self.Griewank_counter_column = 3
+        self.Shwefel_counter_column = 3
+        self.LeeYao_counter_column = 3
 
         self.wb = workbook
 
@@ -99,32 +99,36 @@ class ExcelSaver:
 
         if function == schwefel_func:
             counter = self.Shwefel_counter_column
-            self.Shwefel_counter_column += 2
+            self.Shwefel_counter_column += 1
+            if self.Shwefel_counter_column % 10 == 3:
+                self.Shwefel_counter_column += 1
         elif function == sphere_func:
             counter = self.sphere_counter_column
-            self.sphere_counter_column += 2
+            self.sphere_counter_column += 1
+            if self.sphere_counter_column % 10 == 3:
+                self.sphere_counter_column += 1
         elif function == leeyao_func:
             counter = self.LeeYao_counter_column
-            self.LeeYao_counter_column += 2
+            self.LeeYao_counter_column += 1
+            if self.LeeYao_counter_column % 10 == 3:
+                self.LeeYao_counter_column += 1
         elif function == f2_func:
             counter = self.f2_counter_column
-            self.f2_counter_column += 2
+            self.f2_counter_column += 1
+            if self.f2_counter_column % 10 == 3:
+                self.f2_counter_column += 1
         else:
             counter = self.Griewank_counter_column
-            self.Griewank_counter_column += 2
-        row_plus_1 = counter + 1
-        worksheet.cell(1, counter, "dimension")  # dimension
-        worksheet.cell(1, row_plus_1, "population")  # population
-        worksheet.cell(2, counter, dimension)
-        worksheet.cell(2, row_plus_1, population)
-        worksheet.cell(3, counter, "fin_alg")  # finish algorithm
-        worksheet.cell(3, row_plus_1, "acc_coe")  # coefficient acceleration
-        worksheet.cell(4, counter, algorithm)
-        worksheet.cell(4, row_plus_1, coefficent)
-        worksheet.cell(5, counter, "value" "i")  # i
-        worksheet.cell(5, row_plus_1,  "i")  # value
-        worksheet.cell(5 + result[1], counter, result[0])
-        worksheet.cell(5 + result[1], row_plus_1, result[1])
+            self.Griewank_counter_column += 1
+            if self.Griewank_counter_column % 10 == 3:
+                self.Griewank_counter_column += 1
+
+        worksheet.cell(counter, 2, dimension)
+        worksheet.cell(counter, 1, population)
+        worksheet.cell(counter, 3, algorithm)
+        worksheet.cell(counter, 4, coefficent)
+        worksheet.cell(counter, 5, result[0])
+        worksheet.cell(counter, 6, result[1])
 
 
 class Particle:
@@ -218,19 +222,20 @@ if __name__ == '__main__':
     ws = wb.active
     excel_saver = ExcelSaver(workbook=wb)
 
+    """ {'function': sphere_func,
+              'low_range': -100,
+              'high_range': 100,
+              'epsilon': 0.001,
+          },
+          {
+              'function': leeyao_func,
+              'low_range': -10,
+              'high_range': 10,
+              'epsilon': 0.01,
+          }, """
+
     functions = [
-        {
-            'function': sphere_func,
-            'low_range': -100,
-            'high_range': 100,
-            'epsilon': 0.001,
-        },
-        {
-            'function': leeyao_func,
-            'low_range': -10,
-            'high_range': 10,
-            'epsilon': 0.01,
-        },
+
         {
             'function': schwefel_func,
             'low_range': -10,
@@ -251,8 +256,8 @@ if __name__ == '__main__':
         },
     ]
 
-    dimensions = [5, 10, 20, 30]
-    population_sizes = [20, 30, 50, 80, 100]
+    dimensions = [5, 10, 20]
+    population_sizes = [20, 30, 50, 100]
     acc_funcs = [linear_interpolation, square_interpolation, const_function]
     variants = ['iterations', 'epsilon']
 
@@ -262,20 +267,27 @@ if __name__ == '__main__':
         high_range = _fun['high_range']
         function = _fun['function']
         ws = wb.create_sheet(_fun['function'].__name__)
+        ws.cell(1, 1, "population")  # i
+        ws.cell(1, 2, "dimension")  # value
+        ws.cell(1, 3, "fin_alg")  # i
+        ws.cell(1, 4, "acc_coe")  # value
+        ws.cell(1, 5, "value")  # i
+        ws.cell(1, 6, "iteration")  # value
         for dimension in dimensions:  # wymiar j+1 *20
             for population_size in population_sizes:  # rozmiar populacji k+1 *20
                 for ac_indx, ac_func in enumerate(acc_funcs):  # współczynniki przyśpieszenien
                     for variant_indx, variant in enumerate(variants):  # dwa warianty zatrzymania algorytmu
-                        for i in range(15):
-
+                        for i in range(10):
                             swarm = Swarm(population_size, dimension, low_range, high_range, function, ac_func)
                             pso_algorithm = PSOAlgorithm(swarm, variant, epsilon=epsilon, iterations=10000)
 
-                            print(f'[{i + 1}] Fitness: {function.__name__}, dimensions: {dimension}, population: {population_size}, variant: {variant}, acc func: {ac_func.__name__}')
+                            print(
+                                f'[{i + 1}] Fitness: {function.__name__}, dimensions: {dimension}, population: {population_size}, variant: {variant}, acc func: {ac_func.__name__}')
                             result = pso_algorithm.run()
                             print(result)
                             excel_saver.save_result(worksheet=ws, dimension=dimension, population=population_size,
                                                     coefficent=ac_indx,
                                                     algorithm=variant_indx,
                                                     result=result, function=function)
+                         #   wb.save(filename='Test.xlsx')
         wb.save(filename='Test.xlsx')
